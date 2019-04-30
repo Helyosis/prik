@@ -59,6 +59,8 @@ def deconnexion(client:socket.socket): #Fonction de deconnexion, a comme argumen
     clients_connectes.remove(client) #Supprime de la liste des clients connectés
     clients_a_ecrire.remove(client) #Idem
 
+    del identification[client]
+
     envoyer_message(client,"1[END]")
     client.shutdown(socket.SHUT_RDWR) #Ferme le flux de connexion
     client.close() #Idem
@@ -85,7 +87,7 @@ def envoyer_message(client:socket.socket, message:str):
     return True
 
 def traiter_message(msg, client):
-    global identification, messages_a_envoyer, serveur_on
+    global identification, messages_a_envoyer, serveur_on, clients_connectes
     index = msg[0]
     if index == '0':
         print("Message décrypté reçu :", machine.send_message( msg[1:] ))
@@ -97,6 +99,12 @@ def traiter_message(msg, client):
 
         if msg == "shutdown":
             serveur_on = False
+    elif index == '1':
+        if msg == "1list_clients":
+            liste = "&&".join( list(identification.values()) )
+            #connexion_avec_client.send(('3'+ liste).encode())
+            for client in clients_connectes: 
+                envoyer_message(client, '3' + liste)
 
 serveur_on = True
 identification = {}
@@ -199,4 +207,4 @@ for client in clients_connectes:
     client.close()
 
 connexion_principale.close()
-print("Toutes les connexions ont été fermées et le serveur s'est éteint.")
+print("Toutes les connexions ont été fermées et le serveur s'est éteint.")  

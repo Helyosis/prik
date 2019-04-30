@@ -29,8 +29,6 @@ class Application(tk.Tk):
         self["bg"] = "black"
         self.geometry("900x600+250+100")
         self.minsize(400, 500)
-        #self.minsize("200x400")
-        #self.Button(fenetre, text ="pirate", relief=tk.RAISED, cursor="pirate").pack()
         self.bind_all("<MouseWheel>", self._on_mouse_wheel)
 
         #self.affichage = tk.Label(self, textvariable = self.messages, anchor = "w", justify = "left")
@@ -46,13 +44,24 @@ class Application(tk.Tk):
         self.quitter.pack()
 
         self.mdp_base = ""
+        
+        self.STRING_clients_connectés = tk.StringVar()
+        self.label_clients_connectés = tk.Label(self, textvariable=self.STRING_clients_connectés)
+        self.label_clients_connectés.pack()
 
-        label_clients_connectés = tk.Label(self, text="Clients connectés:")
-        label_clients_connectés.pack()
+        self.bouton_clients_connectés = tk.Button(text="Rafraichir", command=self.afficher_clients_connectés)
+        self.bouton_clients_connectés.pack()
+        
+
+    def afficher_clients_connectés(self):
+        self.connexion_avec_serveur.send("1list_clients".encode("utf-8"))
+
+    
+        
 
     def _on_mouse_wheel(self, event):
         self.affichage.yview_scroll(-1 * int(event.delta / 120), "units")
-
+    
     def xor(self, message1:str, message2:str): # message2 = clé poisson
         crypted = []
         #poisson
@@ -88,7 +97,7 @@ class Application(tk.Tk):
             i[0] = tk.Entry(self.top, textvariable=i[1])
             i[0].pack()
 
-        self.boites[3][0].config(show = ":)")
+        self.boites[3][0].config(show = "*")
 
         self.bouton_confirmer = tk.Button(
             self.top, text="Confirmer", command=self.confirmer_setup)
@@ -128,13 +137,15 @@ class Application(tk.Tk):
         config = json.loads( config )
         self.machine.set_config(config)
 
-      
+
 
         self.connexion_avec_serveur.setblocking(False)
         self.connexion_avec_serveur.send(pseudo.encode("utf-8"))
         self.after(10, self.recevoirMsg)
         self.top.destroy()
         #self.after(10, fenetre.recevoirMsg)
+        time.sleep(0.5)
+        self.afficher_clients_connectés()
 
     def ping(self):
         pass
@@ -221,6 +232,12 @@ class Application(tk.Tk):
                 self.affichage.insert(tk.END, '\n')
 
                 self.affichage.config(state=tk.DISABLED)
+            elif index == '3':
+                liste_clients = message[1:]
+                liste_clients = liste_clients.split("&&")
+                self.STRING_clients_connectés.set("Liste clients connectés :\n" + "\n".join(liste_clients))
+        
+                
 
 
 fenetre = Application()
