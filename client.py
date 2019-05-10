@@ -14,8 +14,8 @@ from math import ceil
 import sys
 
 
-hote = '127.0.0.1'  # "78.211.180.110"
-port = 12801
+hote = '78.211.180.110'  # "78.211.180.110"
+port = 12800
 prefixe = "/"
 pseudo = "Helyosis"
 mdp = "MDP"
