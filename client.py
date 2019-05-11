@@ -195,6 +195,7 @@ class Application(tk.Tk):
         self.after(50, self.recevoirMsg)
         try:
             message = self.connexion_avec_serveur.recv(1024).decode("utf-8")
+            self.affichage.yview_scroll(2, "units")
         except BlockingIOError:
             pass
         else:
