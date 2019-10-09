@@ -134,10 +134,11 @@ while serveur_on:
         else:
             connexion_avec_client.send("OK".encode("utf-8"))
             # config = pickle.dumps( machine.get_config() )
+            """
             if len(clients_connectes) != 0:
                 config = ask_config( clients_connectes[0] )
-            else:
-                config = json.dumps( machine.get_config(), indent=None )
+            else:"""
+            config = json.dumps( machine.get_config(), indent=None )
 
 
             connexion_avec_client.send( str(size_enigma).encode("utf-8") )
@@ -145,6 +146,7 @@ while serveur_on:
             config = xor(config, mdp_base)
             print( xor(config, mdp_base) )
             connexion_avec_client.send( config.encode('utf-8') )
+            connexion_avec_client.send( "\x00".encode() )
 
 
             pseudo = connexion_avec_client.recv(1024).decode("utf-8") #Recevoir le pseudo
@@ -177,7 +179,7 @@ while serveur_on:
                 continue
 
             msg_recu = msg_recu.decode()
-            
+            #machine.send_message(msg_recu)
             print("Un message a été reçu :", msg_recu)
 
             traiter_message(msg_recu, client)
@@ -185,8 +187,6 @@ while serveur_on:
         #Envoi des messages
         for client in clients_a_ecrire:
             for message in messages_a_envoyer:
-                if message[0] == '0':
-                    machine.send_message(message)
                 msg = message
                 print("Envoi de :", msg)
 

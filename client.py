@@ -120,10 +120,18 @@ class Application(tk.Tk):
         self.machine = enigma.Machine( int(size) )
 
         print("Je vais bientôt recevoir la config")
+        config = chunk = ""
+        while not "\x00" in chunk:
+            chunk = self.connexion_avec_serveur.recv(99999999).decode('utf-8')
+            config += chunk
 
-        config =  self.connexion_avec_serveur.recv(9999999).decode('utf-8')
-        print(config)
+        print(config.encode())
+
+        config = config.strip('\x00')
+
+        print(config.encode())
         config = self.xor(config, self.mdp_base)
+        print(config)
         config = json.loads( config )
         self.machine.set_config(config)
 
