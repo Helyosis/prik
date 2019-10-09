@@ -86,7 +86,7 @@ def envoyer_message(client:socket.socket, message:str):
     return True
 
 def traiter_message(msg, client):
-    global identification, messages_a_envoyer, serveur_on
+    global identification, messages_a_envoyer, serveur_on, machine
     index = msg[0]
     if index == '0':
         print("Message décrypté reçu :", machine.send_message( msg[1:] ))

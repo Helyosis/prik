@@ -2,7 +2,7 @@
 from random import seed, shuffle
 import json
 
-seed("Bonjour 123")
+# seed("Bonjour 123")
 
 # TODO: Faire génération aléatoire de clés
 
@@ -140,21 +140,21 @@ class Reflector():
                 f"Config error, expected a REFLECTOR type but got {config['TYPE']}")
 
 
+if __name__ == '__main__':
+    machine = Machine(255)
+    machine2 = Machine(255)
 
-machine = Machine(255)
-machine2 = Machine(255)
+    config = machine.get_config()
 
-config = machine.get_config()
+    machine.set_config(config)
+    machine2.set_config(config)
 
-machine.set_config(config)
-machine2.set_config(config)
+    cryptee = machine.send_message("Bonjour tout le monde POISSON du 2 avril")
+    print(cryptee)
 
-cryptee = machine.send_message("Bonjour tout le monde POISSON du 2 avril")
-print(cryptee)
+    print("==================================")
 
-print("==================================")
+    decryptee = machine2.send_message(cryptee)
+    print(decryptee)
 
-decryptee = machine2.send_message(cryptee)
-print(decryptee)
-
-# print(json.dumps(config, indent=4) )
+    # print(json.dumps(config, indent=4) )

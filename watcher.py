@@ -114,8 +114,14 @@ class Application(tk.Tk):
 
         print("Je vais recevoir la config")
 
-        config =  self.connexion_avec_serveur.recv(9999999).decode('utf-8')
-        print(config)
+        config = chunk = ""
+        while not "\x00" in chunk:
+            chunk = self.connexion_avec_serveur.recv(99999999).decode('utf-8')
+            config += chunk
+
+        print(config.encode())
+
+        config = config.strip('\x00')
 
         config = self.xor(config, self.mdp_base)
         config = json.loads( config )
