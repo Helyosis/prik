@@ -6,19 +6,20 @@ import time
 import hashlib, pickle, json
 from random import randint
 from math import ceil
+import base64
 
 hote = '0.0.0.0' #Peut importe pour le serveur
-port = 12800 #Port du serveur
-size_enigma = 1024
+port = 12801 #Port du serveur
+size_enigma = 255
 
-nonce= 0
+nonce = 0
 mdp_base = "MDP"
 
 connexion_principale = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Créer un objet socket de type TCP (le serveur)
 connexion_principale.bind((hote, port)) #La relie à l'ip et le port
 connexion_principale.listen(5) #Définit le socket en tant que serveur + max de co à accepter en même temps
 
-print("Le serveur est lancé sur {}".format(port))
+print("Le serveur est lancé sur le port {}".format(port))
 
 machine = enigma.Machine(size_enigma)
 
@@ -40,41 +41,28 @@ def xor(message1:str, message2:str): # message2 = clé poisson
     return "".join(crypted)
 
 def ask_config(client:socket.socket):
-	success = envoyer_message(client, "1CONFIG?")
-	if not success: return False
-	while True:
-		config = client.recv(9999999).decode('utf-8')
-		if config[0] == "4":
-			chunk = ""
-			while chunk:
-				chunk = client.recv(9999999).decode('utf-8')
-				config += chunk
-			return xor(config[1:], mdp_base)
-		else:
-			traiter_message(config, client)
+    success = envoyer_message(client, "1CONFIG?")
+    if not success: return False
+    while True:
+        config = client.recv(999999999).decode('utf-8')
+        if config[0] == "4":
+            return xor(config[1:], mdp_base)
+        else:
+            traiter_message(config, client)
     
     
 
 def deconnexion(client:socket.socket): #Fonction de deconnexion, a comme argument le client à déconnecter
-	global clients_a_ecrire, clients_connectes, identification, messages_a_envoyer
-	
-	messages_a_envoyer.append("2[-]{} a quitté le serveur".format(identification[client])) #Informe tout le monde de la déconnexion
-	
-	try:
-		envoyer_message(client,"1[END]")
-		client.shutdown(socket.SHUT_RDWR) #Ferme le flux de connexion
-		client.close() #Idem
-	except socket.error: pass
-    
-	try:
-		clients_connectes.remove(client) #Supprime de la liste des clients connectés
-		clients_a_ecrire.remove(client) #Idem
-		del identification[client]
-	except:
-		pass
+    global clients_a_ecrire, clients_connectes, identification, messages_a_envoyer
 
-	
-    
+    messages_a_envoyer.append("2[-]{} a quitté le serveur".format(identification[client])) #Informe tout le monde de la déconnexion
+
+    clients_connectes.remove(client) #Supprime de la liste des clients connectés
+    clients_a_ecrire.remove(client) #Idem
+
+    envoyer_message(client,"1[END]")
+    client.shutdown(socket.SHUT_RDWR) #Ferme le flux de connexion
+    client.close() #Idem
 
 def ping(client:socket.socket): #Vérifie l'intégrité de la connexion
     global last_ping #Liste des dates de dernier pings
@@ -98,7 +86,7 @@ def envoyer_message(client:socket.socket, message:str):
     return True
 
 def traiter_message(msg, client):
-    global identification, messages_a_envoyer, serveur_on, clients_connectes
+    global identification, messages_a_envoyer, serveur_on
     index = msg[0]
     if index == '0':
         print("Message décrypté reçu :", machine.send_message( msg[1:] ))
@@ -110,12 +98,6 @@ def traiter_message(msg, client):
 
         if msg == "shutdown":
             serveur_on = False
-    elif index == '1':
-        if msg == "1list_clients":
-            liste = "&&".join( list(identification.values()) )
-            #connexion_avec_client.send(('3'+ liste).encode())
-            for client in clients_connectes: 
-                envoyer_message(client, '3' + liste)
 
 serveur_on = True
 identification = {}
@@ -150,16 +132,15 @@ while serveur_on:
             print("Intru détecté /!\\")
 
         else:
-            connexion_avec_client.send("OK".encode("utf-8")); time.sleep(0.5)
+            connexion_avec_client.send("OK".encode("utf-8"))
             # config = pickle.dumps( machine.get_config() )
-            if False:#len(clients_connectes) != 0:
+            if len(clients_connectes) != 0:
                 config = ask_config( clients_connectes[0] )
             else:
                 config = json.dumps( machine.get_config(), indent=None )
 
-            
 
-            connexion_avec_client.send( str(size_enigma).encode("utf-8") ); time.sleep(0.5)
+            connexion_avec_client.send( str(size_enigma).encode("utf-8") )
 
             config = xor(config, mdp_base)
             print( xor(config, mdp_base) )
@@ -205,8 +186,7 @@ while serveur_on:
         for client in clients_a_ecrire:
             for message in messages_a_envoyer:
                 if message[0] == '0':
-                    pass
-					#machine.send_message(message)
+                    machine.send_message(message)
                 msg = message
                 print("Envoi de :", msg)
 
@@ -219,4 +199,4 @@ for client in clients_connectes:
     client.close()
 
 connexion_principale.close()
-print("Toutes les connexions ont été fermées et le serveur s'est éteint.")  
+print("Toutes les connexions ont été fermées et le serveur s'est éteint.")

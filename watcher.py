@@ -17,13 +17,13 @@ import base64
 hote = '127.0.0.1'  # "78.211.180.110"
 port = 12801
 prefixe = "/"
-pseudo = "Helyosis"
 mdp = "MDP"
+
 
 
 class Application(tk.Tk):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
 
         self.title("Prik")
         self["bg"] = "black"
@@ -37,10 +37,6 @@ class Application(tk.Tk):
 
         self.affichage = tk.Text(state=tk.DISABLED)
         self.affichage.pack(fill=tk.BOTH)
-
-        self.saisie = tk.Entry(self, width =45)
-        self.saisie.pack()
-        self.saisie.bind("<Return>", self.envoiTexte)
 
         self.quitter = tk.Button(self, text="Quitter", command=self.end)
         self.quitter.pack()
@@ -77,7 +73,6 @@ class Application(tk.Tk):
         self.top.geometry("200x200+0+100")
 
         self.boites = [
-            [None, None, pseudo],
             [None, None, hote],
             [None, None, port],
             [None, None, mdp],
@@ -88,8 +83,6 @@ class Application(tk.Tk):
             i[0] = tk.Entry(self.top, textvariable=i[1])
             i[0].pack()
 
-        self.boites[3][0].config(show = ":)")
-
         self.bouton_confirmer = tk.Button(
             self.top, text="Confirmer", command=self.confirmer_setup)
         self.bouton_confirmer.pack()
@@ -97,13 +90,13 @@ class Application(tk.Tk):
         self.top.focus_set()
 
     def confirmer_setup(self):
-        pseudo, ip, port, self.mdp_base = self.boites[0][1].get(), self.boites[1][1].get(
-        ), self.boites[2][1].get(), self.boites[3][1].get()
+        ip, port, self.mdp_base = self.boites[0][1].get(), self.boites[1][1].get(), self.boites[2][1].get()
         self.connexion_avec_serveur = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
-        self.connexion_avec_serveur.connect((ip, int(port)))
+        self.connexion_avec_serveur.connect(
+            ( ip, int(port) ))
 
-        print("connexion avec le QG réussite")
+        print("connexion avec le QG réussie")
         nonce = self.connexion_avec_serveur.recv(1024).decode()  # /!\
         print(nonce)
 
@@ -113,16 +106,17 @@ class Application(tk.Tk):
         self.connexion_avec_serveur.send(mdp.encode("utf-8"))  # on evoi
 
         etat = self.connexion_avec_serveur.recv(1024).decode('utf-8')
-        if etat == "PAS OK":
+        if etat != "OK":
             sys.exit(0)
 
         size = self.connexion_avec_serveur.recv(1024).decode("utf-8")
         self.machine = enigma.Machine( int(size) )
 
-        print("Je vais bientôt recevoir la config")
+        print("Je vais recevoir la config")
 
         config =  self.connexion_avec_serveur.recv(9999999).decode('utf-8')
         print(config)
+
         config = self.xor(config, self.mdp_base)
         config = json.loads( config )
         self.machine.set_config(config)
@@ -130,7 +124,7 @@ class Application(tk.Tk):
       
 
         self.connexion_avec_serveur.setblocking(False)
-        self.connexion_avec_serveur.send(pseudo.encode("utf-8"))
+        self.connexion_avec_serveur.send("*Invisible*".encode("utf-8"))
         self.after(10, self.recevoirMsg)
         self.top.destroy()
         #self.after(10, fenetre.recevoirMsg)
@@ -138,35 +132,6 @@ class Application(tk.Tk):
     def ping(self):
         pass
         #print("PING reçu")
-
-    def envoiTexte(self, event):
-
-        widget = event.widget
-        msg_a_envoyer = widget.get()
-
-        if msg_a_envoyer == "fin":
-            self.confirmerQuit()
-
-        else:
-
-            config = self.machine.get_config()
-
-            machine_temp = enigma.Machine()
-            machine_temp.set_config( config )
-
-            msg_crypté = machine_temp.send_message( msg_a_envoyer )
-            # self.machine.send_message( msg_a_envoyer )
-
-
-            msg_a_envoyer = '0' + msg_crypté
-            print("Envoi de", msg_a_envoyer)
-            self.connexion_avec_serveur.send(msg_a_envoyer.encode("utf-8"))
-
-           # self.machine.set_config( dict(machine_temp.get_config()) )
-            
-
-        widget.delete(0, 'end')
-
     def end(self):
         # msg.askyesno('Terminer la session ?', 'Êtes-vous sûr de vouloir quitter ?'):
         if True:
@@ -197,13 +162,12 @@ class Application(tk.Tk):
                 self.affichage.config(state = tk.NORMAL)
                 vrai_message = "".join( message.split(" > ")[1:] )
                 pseudo = message.split(" > ")[0][1:]
-                message_decrypt = self.machine.send_message( vrai_message )
-                self.affichage.insert(tk.END, pseudo + " > " + message_decrypt)
+                self.affichage.insert(tk.END, pseudo + " > " + vrai_message) # Don't want to decrypt the message
                 self.affichage.insert(tk.END, '\n')
 
                 self.affichage.config(state=tk.DISABLED)
 
-            elif index == '1':
+            elif index == '1': # Commande
 
                 if message[1:] == "CONFIG?":
                     config = self.machine.get_config()
@@ -212,7 +176,7 @@ class Application(tk.Tk):
                     config = "4" + config
                     self.connexion_avec_serveur.send( config.encode("utf-8") )
 
-            elif index == '2':
+            elif index == '2': # Message automatique (déconnection, etc), aucun cryptage pour les messages autos donc traitement différent
 
                 self.affichage.config(state = tk.NORMAL)
 
