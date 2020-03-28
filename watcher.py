@@ -1,24 +1,19 @@
 # coding: utf-8
 
-import enigma
+import hashlib
+import json
 import socket
-import select
-import time
-from threading import Thread
+import sys
 import tkinter as tk
 import tkinter.messagebox as msg
-import tkinter.simpledialog as simple
-import hashlib
-import pickle, json
 from math import ceil
-import sys
-import base64
+
+from enigma_machine import enigma
 
 hote = '127.0.0.1'  # "78.211.180.110"
 port = 12801
 prefixe = "/"
 mdp = "MDP"
-
 
 
 class Application(tk.Tk):
@@ -110,7 +105,7 @@ class Application(tk.Tk):
             sys.exit(0)
 
         size = self.connexion_avec_serveur.recv(1024).decode("utf-8")
-        self.machine = enigma.Machine( int(size) )
+        self.machine = enigma.Machine(int(size))
 
         print("Je vais recevoir la config")
 
